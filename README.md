@@ -25,12 +25,12 @@ file does not pass the checksum check.
 3. Copy the entire block below, paste it into PowerShell, and press Enter:
 
 ```powershell
-$folder = Join-Path $env:USERPROFILE "Downloads\JZLite-0.20.0-test"
+$folder = Join-Path $env:USERPROFILE "Downloads\JZLite-0.20.1-test"
 if (Test-Path $folder) { throw "Delete the old $folder folder first, then try again." }
 New-Item -ItemType Directory -Path $folder | Out-Null
 Set-Location $folder
-curl.exe -fL "https://github.com/jzkanq/jzlite-downloads/releases/download/v0.20.0-test/JZLite-0.20.0-test-UNSIGNED-EXPERIMENTAL.tgz" -o JZLite.tgz
-if ((Get-FileHash .\JZLite.tgz -Algorithm SHA256).Hash.ToLowerInvariant() -ne "08fa45d4eb063cbda32c9e76cf0afd370e0ee953553e853e5bfc5b2dbe4b9fc1") { throw "Checksum mismatch. Do not run this download." }
+curl.exe -fL "https://github.com/jzkanq/jzlite-downloads/raw/main/releases/v0.20.1-test/JZLite-0.20.1-test-UNSIGNED-EXPERIMENTAL.tgz" -o JZLite.tgz
+if ((Get-FileHash .\JZLite.tgz -Algorithm SHA256).Hash.ToLowerInvariant() -ne "05f3e93f1238aa38daf7855ea1bcbb7c7a32582a7b60a8b9f90b0917dd53688f") { throw "Checksum mismatch. Do not run this download." }
 tar.exe -xzf .\JZLite.tgz
 .\Install-JZLite.bat --clean-install
 ```
@@ -97,5 +97,5 @@ MAC. If the checksum fails, delete the download and report it—do not continue.
 ## Official archive checksum
 
 ```text
-08fa45d4eb063cbda32c9e76cf0afd370e0ee953553e853e5bfc5b2dbe4b9fc1
+05f3e93f1238aa38daf7855ea1bcbb7c7a32582a7b60a8b9f90b0917dd53688f
 ```
