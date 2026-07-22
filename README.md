@@ -25,12 +25,12 @@ file does not pass the checksum check.
 3. Copy the entire block below, paste it into PowerShell, and press Enter:
 
 ```powershell
-$folder = Join-Path $env:USERPROFILE "Downloads\JZLite-0.18.2-test"
+$folder = Join-Path $env:USERPROFILE "Downloads\JZLite-0.19.0-test"
 if (Test-Path $folder) { throw "Delete the old $folder folder first, then try again." }
 New-Item -ItemType Directory -Path $folder | Out-Null
 Set-Location $folder
-curl.exe -fL "https://github.com/jzkanq/jzlite-downloads/releases/download/v0.18.2-test/JZLite-0.18.2-test-UNSIGNED-EXPERIMENTAL.tgz" -o JZLite.tgz
-if ((Get-FileHash .\JZLite.tgz -Algorithm SHA256).Hash.ToLowerInvariant() -ne "0d118924c8577548ab3531f4957e5b0ec6f5c718ad89b22aa9e045e2ed6a6ea7") { throw "Checksum mismatch. Do not run this download." }
+curl.exe -fL "https://github.com/jzkanq/jzlite-downloads/releases/download/v0.19.0-test/JZLite-0.19.0-test-UNSIGNED-EXPERIMENTAL.tgz" -o JZLite.tgz
+if ((Get-FileHash .\JZLite.tgz -Algorithm SHA256).Hash.ToLowerInvariant() -ne "6ccc9e4700a0779ad90e08ea6697f7641b023a58bfb4fa3cd661f8d1986e3a13") { throw "Checksum mismatch. Do not run this download." }
 tar.exe -xzf .\JZLite.tgz
 .\Install-JZLite.bat --clean-install
 ```
@@ -54,13 +54,14 @@ key, administrator password, VLESS UUID, or subscription URL.
 
 ## Open JZLite
 
-When installation succeeds, connect to the modem's LAN/Wi-Fi and open:
-
-<http://192.168.0.1:5000>
+When installation succeeds, connect to the modem's LAN/Wi-Fi and open the JZLite
+address printed by the installer. It uses the modem's current LAN/default-gateway
+IP plus port `5000`, for example `http://192.168.8.1:5000`.
 
 Sign in with the factory-administrator password entered during installation.
-Import or create a profile, run diagnostics, and use a short guarded routing
-trial first. Do not start whole-modem routing until the diagnostics pass.
+Import or create a profile and run diagnostics. Whole-modem VPN stays active
+until manually stopped or the modem reboots. Health and failure rollback remain
+armed, but do not start routing until diagnostics pass.
 
 ## Remove or retry
 
@@ -75,5 +76,5 @@ MAC. If the checksum fails, delete the download and report it—do not continue.
 ## Official archive checksum
 
 ```text
-0d118924c8577548ab3531f4957e5b0ec6f5c718ad89b22aa9e045e2ed6a6ea7
+6ccc9e4700a0779ad90e08ea6697f7641b023a58bfb4fa3cd661f8d1986e3a13
 ```
