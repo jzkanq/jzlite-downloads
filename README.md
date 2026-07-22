@@ -25,12 +25,12 @@ file does not pass the checksum check.
 3. Copy the entire block below, paste it into PowerShell, and press Enter:
 
 ```powershell
-$folder = Join-Path $env:USERPROFILE "Downloads\JZLite-0.19.0-test"
+$folder = Join-Path $env:USERPROFILE "Downloads\JZLite-0.20.0-test"
 if (Test-Path $folder) { throw "Delete the old $folder folder first, then try again." }
 New-Item -ItemType Directory -Path $folder | Out-Null
 Set-Location $folder
-curl.exe -fL "https://github.com/jzkanq/jzlite-downloads/releases/download/v0.19.0-test/JZLite-0.19.0-test-UNSIGNED-EXPERIMENTAL.tgz" -o JZLite.tgz
-if ((Get-FileHash .\JZLite.tgz -Algorithm SHA256).Hash.ToLowerInvariant() -ne "6ccc9e4700a0779ad90e08ea6697f7641b023a58bfb4fa3cd661f8d1986e3a13") { throw "Checksum mismatch. Do not run this download." }
+curl.exe -fL "https://github.com/jzkanq/jzlite-downloads/releases/download/v0.20.0-test/JZLite-0.20.0-test-UNSIGNED-EXPERIMENTAL.tgz" -o JZLite.tgz
+if ((Get-FileHash .\JZLite.tgz -Algorithm SHA256).Hash.ToLowerInvariant() -ne "08fa45d4eb063cbda32c9e76cf0afd370e0ee953553e853e5bfc5b2dbe4b9fc1") { throw "Checksum mismatch. Do not run this download." }
 tar.exe -xzf .\JZLite.tgz
 .\Install-JZLite.bat --clean-install
 ```
@@ -60,15 +60,36 @@ IP plus port `5000`, for example `http://192.168.8.1:5000`.
 
 Sign in with the factory-administrator password entered during installation.
 Import or create a profile and run diagnostics. Whole-modem VPN stays active
-until manually stopped or the modem reboots. Health and failure rollback remain
-armed, but do not start routing until diagnostics pass.
+until manually stopped or the modem reboots. The main **Connect** button now
+tests enabled profiles and starts guarded whole-modem routing automatically.
+Health and failure rollback remain armed.
+
+## Optional persistent installation
+
+First prove temporary mode works. Then reopen CMD in the extracted folder and run:
+
+```bat
+Install-JZLite.bat --install-persistent
+```
+
+If XLite is currently installed, use this instead. It backs up XLite and imports
+its active VLESS profile before switching the verified firmware boot slot:
+
+```bat
+Install-JZLite.bat --migrate-xlite
+```
+
+Persistent settings include an optional **Connect after reboot** switch. It is
+off by default. To upgrade later, use `Install-JZLite.bat --upgrade-persistent`.
+To remove JZLite and restore the XLite backup, use
+`Install-JZLite.bat --uninstall`.
 
 ## Remove or retry
 
-JZLite runs only from temporary modem storage and should disappear after a modem
-reboot. To replace a running test copy, run the same installer again with
-`--clean-install`. Do not manually delete unrelated modem firewall or routing
-rules.
+Temporary JZLite disappears after a modem reboot. To replace a temporary test
+copy, run the same installer again with `--clean-install`. Persistent JZLite must
+be removed with `--uninstall`. Do not manually delete modem files, firewall rules
+or routing rules.
 
 If activation is rejected, check that the key was issued for the detected factory
 MAC. If the checksum fails, delete the download and report it—do not continue.
@@ -76,5 +97,5 @@ MAC. If the checksum fails, delete the download and report it—do not continue.
 ## Official archive checksum
 
 ```text
-6ccc9e4700a0779ad90e08ea6697f7641b023a58bfb4fa3cd661f8d1986e3a13
+08fa45d4eb063cbda32c9e76cf0afd370e0ee953553e853e5bfc5b2dbe4b9fc1
 ```
