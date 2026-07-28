@@ -1,15 +1,15 @@
 @echo off
 setlocal EnableExtensions DisableDelayedExpansion
 chcp 65001 >nul
-title JZLite 1.0.0 Downloader
+title JZLite 1.0.1 Downloader
 
-set "VERSION=1.0.0"
+set "VERSION=1.0.1"
 set "DOWNLOAD_URL=https://github.com/jzkanq/jzlite-downloads/releases/download/v%VERSION%/JZLite-%VERSION%-UNSIGNED-EXPERIMENTAL.tgz"
-set "EXPECTED_SHA256=7f7784802e558c55d5bb014d423495df876f256d5579d7088a40d807f241180e"
+set "EXPECTED_SHA256=3a19bb5f365334f9daa615193c8ece4a28e7cd33dac748bdc0e4299ed3de87f0"
 set "INSTALL_FOLDER=%USERPROFILE%\Downloads\JZLite-%VERSION%"
 set "ARCHIVE=%INSTALL_FOLDER%\JZLite.tgz"
 set "MODE=%~1"
-if not defined MODE set "MODE=--clean-install"
+if not defined MODE goto mode_ok
 
 if /i "%MODE%"=="--clean-install" goto mode_ok
 if /i "%MODE%"=="--install-persistent" goto mode_ok
@@ -27,7 +27,11 @@ if not "%~2"=="" (
 echo.
 echo JZLite %VERSION% - unsigned experimental installer
 echo ==================================================
-echo Mode: %MODE%
+if defined MODE (
+  echo Mode: %MODE%
+) else (
+  echo Mode: choose from the setup menu after verification
+)
 echo The archive will be verified before execution.
 echo.
 
@@ -93,7 +97,11 @@ if errorlevel 1 (
 )
 
 pushd "%INSTALL_FOLDER%"
-call ".\Install-JZLite.bat" %MODE%
+if defined MODE (
+  call ".\Install-JZLite.bat" %MODE%
+) else (
+  call ".\Install-JZLite.bat"
+)
 set "INSTALL_EXIT=%ERRORLEVEL%"
 popd
 exit /b %INSTALL_EXIT%

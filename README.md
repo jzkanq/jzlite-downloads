@@ -1,4 +1,4 @@
-# JZLite 1.0 tester guide
+# JZLite 1.0.1 tester guide
 
 JZLite is currently an **unsigned experimental test build** for compatible ARM64
 modems with root ADB access. The source code is private and proprietary.
@@ -25,15 +25,15 @@ file does not pass the checksum check.
 3. Copy the entire block below, paste it into PowerShell, and press Enter:
 
 ```powershell
-$folder = Join-Path $env:USERPROFILE "Downloads\JZLite-1.0.0"
+$folder = Join-Path $env:USERPROFILE "Downloads\JZLite-1.0.1"
 if (Test-Path $folder) { throw "Delete the old $folder folder first, then try again." }
 New-Item -ItemType Directory -Path $folder | Out-Null
 Set-Location $folder
-curl.exe -fL "https://github.com/jzkanq/jzlite-downloads/raw/main/releases/v1.0.0/JZLite-1.0.0-UNSIGNED-EXPERIMENTAL.tgz" -o JZLite.tgz
-if ((Get-FileHash .\JZLite.tgz -Algorithm SHA256).Hash.ToLowerInvariant() -ne "7f7784802e558c55d5bb014d423495df876f256d5579d7088a40d807f241180e") { throw "Checksum mismatch. Do not run this download." }
+curl.exe -fL "https://github.com/jzkanq/jzlite-downloads/raw/main/releases/v1.0.1/JZLite-1.0.1-UNSIGNED-EXPERIMENTAL.tgz" -o JZLite.tgz
+if ((Get-FileHash .\JZLite.tgz -Algorithm SHA256).Hash.ToLowerInvariant() -ne "3a19bb5f365334f9daa615193c8ece4a28e7cd33dac748bdc0e4299ed3de87f0") { throw "Checksum mismatch. Do not run this download." }
 tar.exe -xzf .\JZLite.tgz
 .\Verify-JZLite.ps1 -ExtractedFolder . -AllowUnsignedExperimental
-.\Install-JZLite.bat --clean-install
+.\Install-JZLite.bat
 ```
 
 The checksum line protects testers from a damaged or replaced download. Do not
@@ -60,8 +60,14 @@ key, administrator password, VLESS UUID, or subscription URL.
 ## Open JZLite
 
 When installation succeeds, connect to the modem's LAN/Wi-Fi and open the JZLite
-address printed by the installer. It uses the modem's current LAN/default-gateway
-IP plus port `5000`, for example `http://192.168.8.1:5000`.
+HTTPS address printed by the installer. It uses the modem's current
+LAN/default-gateway IP plus port `5443`, for example
+`https://192.168.8.1:5443`.
+
+The modem creates its own certificate, so the browser will show a certificate
+warning. Compare the SHA-256 certificate fingerprint shown by the installer
+before continuing. Port `5000` is retained only for health checks and safe
+redirects; passwords are never accepted over plaintext HTTP.
 
 Sign in with the factory-administrator password entered during installation.
 Import or create a profile and run diagnostics. Whole-modem VPN stays active
@@ -102,7 +108,7 @@ MAC. If the checksum fails, delete the download and report it—do not continue.
 ## Official archive checksum
 
 ```text
-7f7784802e558c55d5bb014d423495df876f256d5579d7088a40d807f241180e
+3a19bb5f365334f9daa615193c8ece4a28e7cd33dac748bdc0e4299ed3de87f0
 ```
 
-[View the JZLite 1.0.0 public release](https://github.com/jzkanq/jzlite-downloads/releases/tag/v1.0.0).
+[View the JZLite 1.0.1 public release](https://github.com/jzkanq/jzlite-downloads/releases/tag/v1.0.1).
