@@ -1,4 +1,4 @@
-# JZLite experimental tester guide
+# JZLite 1.0 tester guide
 
 JZLite is currently an **unsigned experimental test build** for compatible ARM64
 modems with root ADB access. The source code is private and proprietary.
@@ -11,7 +11,7 @@ You need:
 - the supported modem connected by USB;
 - working ADB/root access to the modem;
 - a JZLite licence key made for that modem's factory MAC address;
-- at least 52 MiB of free modem memory;
+- at least 20 MiB of free modem memory for installation;
 - a recovery method in case the modem loses connectivity.
 
 Windows displays **Unknown publisher** because this free test build is not
@@ -25,18 +25,23 @@ file does not pass the checksum check.
 3. Copy the entire block below, paste it into PowerShell, and press Enter:
 
 ```powershell
-$folder = Join-Path $env:USERPROFILE "Downloads\JZLite-0.20.9-test"
+$folder = Join-Path $env:USERPROFILE "Downloads\JZLite-1.0.0"
 if (Test-Path $folder) { throw "Delete the old $folder folder first, then try again." }
 New-Item -ItemType Directory -Path $folder | Out-Null
 Set-Location $folder
-curl.exe -fL "https://github.com/jzkanq/jzlite-downloads/raw/main/releases/v0.20.9-test/JZLite-0.20.9-test-UNSIGNED-EXPERIMENTAL.tgz" -o JZLite.tgz
-if ((Get-FileHash .\JZLite.tgz -Algorithm SHA256).Hash.ToLowerInvariant() -ne "2a8fd2c56a15682cc29a08d59db76c25a550ea2a0b82c2c1d768fb4cbd563675") { throw "Checksum mismatch. Do not run this download." }
+curl.exe -fL "https://github.com/jzkanq/jzlite-downloads/raw/main/releases/v1.0.0/JZLite-1.0.0-UNSIGNED-EXPERIMENTAL.tgz" -o JZLite.tgz
+if ((Get-FileHash .\JZLite.tgz -Algorithm SHA256).Hash.ToLowerInvariant() -ne "7f7784802e558c55d5bb014d423495df876f256d5579d7088a40d807f241180e") { throw "Checksum mismatch. Do not run this download." }
 tar.exe -xzf .\JZLite.tgz
+.\Verify-JZLite.ps1 -ExtractedFolder . -AllowUnsignedExperimental
 .\Install-JZLite.bat --clean-install
 ```
 
 The checksum line protects testers from a damaged or replaced download. Do not
 remove it from the command.
+
+The repository also contains [`installer.bat`](installer.bat), which performs
+the same HTTPS download, archive SHA-256 check, internal manifest verification,
+extraction, and temporary installation.
 
 ## Installer questions
 
@@ -60,7 +65,7 @@ IP plus port `5000`, for example `http://192.168.8.1:5000`.
 
 Sign in with the factory-administrator password entered during installation.
 Import or create a profile and run diagnostics. Whole-modem VPN stays active
-until manually stopped or the modem reboots. The main **Connect** button now
+until manually stopped or the modem reboots. The main **Connect whole modem** button
 tests enabled profiles and starts guarded whole-modem routing automatically.
 Health and failure rollback remain armed.
 
@@ -97,5 +102,7 @@ MAC. If the checksum fails, delete the download and report it—do not continue.
 ## Official archive checksum
 
 ```text
-2a8fd2c56a15682cc29a08d59db76c25a550ea2a0b82c2c1d768fb4cbd563675
+7f7784802e558c55d5bb014d423495df876f256d5579d7088a40d807f241180e
 ```
+
+[View the JZLite 1.0.0 public release](https://github.com/jzkanq/jzlite-downloads/releases/tag/v1.0.0).
