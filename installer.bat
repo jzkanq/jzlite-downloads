@@ -1,11 +1,11 @@
 @echo off
 setlocal EnableExtensions DisableDelayedExpansion
 chcp 65001 >nul
-title JZLite 1.0.1 Downloader
+title JZLite 1.0.2 Downloader
 
-set "VERSION=1.0.1"
+set "VERSION=1.0.2"
 set "DOWNLOAD_URL=https://github.com/jzkanq/jzlite-downloads/releases/download/v%VERSION%/JZLite-%VERSION%-UNSIGNED-EXPERIMENTAL.tgz"
-set "EXPECTED_SHA256=3a19bb5f365334f9daa615193c8ece4a28e7cd33dac748bdc0e4299ed3de87f0"
+set "EXPECTED_SHA256=06739c2e17e391b052171fd842e92177bc5b735d38e6ccf919f4081317fb28f2"
 set "INSTALL_FOLDER=%USERPROFILE%\Downloads\JZLite-%VERSION%"
 set "ARCHIVE=%INSTALL_FOLDER%\JZLite.tgz"
 set "MODE=%~1"

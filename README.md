@@ -1,4 +1,4 @@
-# JZLite 1.0.1 tester guide
+# JZLite 1.0.2 tester guide
 
 JZLite is currently an **unsigned experimental test build** for compatible ARM64
 modems with root ADB access. The source code is private and proprietary.
@@ -25,12 +25,12 @@ file does not pass the checksum check.
 3. Copy the entire block below, paste it into PowerShell, and press Enter:
 
 ```powershell
-$folder = Join-Path $env:USERPROFILE "Downloads\JZLite-1.0.1"
+$folder = Join-Path $env:USERPROFILE "Downloads\JZLite-1.0.2"
 if (Test-Path $folder) { throw "Delete the old $folder folder first, then try again." }
 New-Item -ItemType Directory -Path $folder | Out-Null
 Set-Location $folder
-curl.exe -fL "https://github.com/jzkanq/jzlite-downloads/raw/main/releases/v1.0.1/JZLite-1.0.1-UNSIGNED-EXPERIMENTAL.tgz" -o JZLite.tgz
-if ((Get-FileHash .\JZLite.tgz -Algorithm SHA256).Hash.ToLowerInvariant() -ne "3a19bb5f365334f9daa615193c8ece4a28e7cd33dac748bdc0e4299ed3de87f0") { throw "Checksum mismatch. Do not run this download." }
+curl.exe -fL "https://github.com/jzkanq/jzlite-downloads/raw/main/releases/v1.0.2/JZLite-1.0.2-UNSIGNED-EXPERIMENTAL.tgz" -o JZLite.tgz
+if ((Get-FileHash .\JZLite.tgz -Algorithm SHA256).Hash.ToLowerInvariant() -ne "06739c2e17e391b052171fd842e92177bc5b735d38e6ccf919f4081317fb28f2") { throw "Checksum mismatch. Do not run this download." }
 tar.exe -xzf .\JZLite.tgz
 .\Verify-JZLite.ps1 -ExtractedFolder . -AllowUnsignedExperimental
 .\Install-JZLite.bat
@@ -47,7 +47,8 @@ extraction, and temporary installation.
 
 The installer will:
 
-1. detect the modem, architecture, root shell, and factory MAC candidate;
+1. detect the modem, request `adb root` when needed, and verify the architecture,
+   root shell, and factory MAC candidate;
 2. ask for the JZLite licence key in the CMD window;
 3. activate and verify the licence;
 4. ask for a factory-administrator password;
@@ -74,6 +75,11 @@ Import or create a profile and run diagnostics. Whole-modem VPN stays active
 until manually stopped or the modem reboots. The main **Connect whole modem** button
 tests enabled profiles and starts guarded whole-modem routing automatically.
 Health and failure rollback remain armed.
+
+Settings includes an optional **Block ads and trackers with DNS** switch. It
+uses AdGuard DNS during whole-modem routing and is off by default. Disconnect
+and reconnect after changing it. DNS filtering cannot reliably remove video ads
+or advertisements served from the same domains as application content.
 
 ## Optional persistent installation
 
@@ -108,7 +114,7 @@ MAC. If the checksum fails, delete the download and report it—do not continue.
 ## Official archive checksum
 
 ```text
-3a19bb5f365334f9daa615193c8ece4a28e7cd33dac748bdc0e4299ed3de87f0
+06739c2e17e391b052171fd842e92177bc5b735d38e6ccf919f4081317fb28f2
 ```
 
-[View the JZLite 1.0.1 public release](https://github.com/jzkanq/jzlite-downloads/releases/tag/v1.0.1).
+[View the JZLite 1.0.2 public release](https://github.com/jzkanq/jzlite-downloads/releases/tag/v1.0.2).
