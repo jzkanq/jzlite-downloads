@@ -1,4 +1,4 @@
-# JZLite 1.0.2 tester guide
+# JZLite 1.0.3 tester guide
 
 JZLite is currently an **unsigned experimental test build** for compatible ARM64
 modems with root ADB access. The source code is private and proprietary.
@@ -25,12 +25,12 @@ file does not pass the checksum check.
 3. Copy the entire block below, paste it into PowerShell, and press Enter:
 
 ```powershell
-$folder = Join-Path $env:USERPROFILE "Downloads\JZLite-1.0.2"
+$folder = Join-Path $env:USERPROFILE "Downloads\JZLite-1.0.3"
 if (Test-Path $folder) { throw "Delete the old $folder folder first, then try again." }
 New-Item -ItemType Directory -Path $folder | Out-Null
 Set-Location $folder
-curl.exe -fL "https://github.com/jzkanq/jzlite-downloads/raw/main/releases/v1.0.2/JZLite-1.0.2-UNSIGNED-EXPERIMENTAL.tgz" -o JZLite.tgz
-if ((Get-FileHash .\JZLite.tgz -Algorithm SHA256).Hash.ToLowerInvariant() -ne "06739c2e17e391b052171fd842e92177bc5b735d38e6ccf919f4081317fb28f2") { throw "Checksum mismatch. Do not run this download." }
+curl.exe -fL "https://github.com/jzkanq/jzlite-downloads/raw/main/releases/v1.0.3/JZLite-1.0.3-UNSIGNED-EXPERIMENTAL.tgz" -o JZLite.tgz
+if ((Get-FileHash .\JZLite.tgz -Algorithm SHA256).Hash.ToLowerInvariant() -ne "f36f5d2fca09cc19fd7d60d42686ef517acec79b78908c009ffe467bd363b3ec") { throw "Checksum mismatch. Do not run this download." }
 tar.exe -xzf .\JZLite.tgz
 .\Verify-JZLite.ps1 -ExtractedFolder . -AllowUnsignedExperimental
 .\Install-JZLite.bat
@@ -114,7 +114,7 @@ MAC. If the checksum fails, delete the download and report it—do not continue.
 ## Official archive checksum
 
 ```text
-06739c2e17e391b052171fd842e92177bc5b735d38e6ccf919f4081317fb28f2
+f36f5d2fca09cc19fd7d60d42686ef517acec79b78908c009ffe467bd363b3ec
 ```
 
-[View the JZLite 1.0.2 public release](https://github.com/jzkanq/jzlite-downloads/releases/tag/v1.0.2).
+[View the JZLite 1.0.3 public release](https://github.com/jzkanq/jzlite-downloads/releases/tag/v1.0.3).
