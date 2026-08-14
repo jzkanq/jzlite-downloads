@@ -5,7 +5,7 @@ title JZLite 1.0.2 Downloader
 
 set "VERSION=1.0.3"
 set "DOWNLOAD_URL=https://github.com/jzkanq/jzlite-downloads/releases/download/v%VERSION%/JZLite-%VERSION%-UNSIGNED-EXPERIMENTAL.tgz"
-set "EXPECTED_SHA256=cf8ce83e6fe71ac35faf2e833dd7ad33d61f50f205caf15b223971014b6e78b0"
+set "EXPECTED_SHA256=faf0bce4d9db77f93a82e052e2b63eb2338a0aa5251f2a56732c925336a2b68e"
 set "INSTALL_FOLDER=%USERPROFILE%\Downloads\JZLite-%VERSION%"
 set "ARCHIVE=%INSTALL_FOLDER%\JZLite.tgz"
 set "MODE=%~1"
