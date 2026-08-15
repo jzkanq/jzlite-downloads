@@ -17,13 +17,19 @@ Write-Host "╚███║███████╗███████╗█�
 Write-Host "  JZLite Cloud-Connected Router Engine v$version" -ForegroundColor Green
 Write-Host ""
 
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 -bor [Net.SecurityProtocolType]::Tls13
+
 if (Test-Path -LiteralPath $tempDir) {
     Remove-Item -LiteralPath $tempDir -Recurse -Force -ErrorAction SilentlyContinue
 }
 New-Item -ItemType Directory -Force -Path $tempDir | Out-Null
 
 Write-Host "Downloading JZLite v$version package..." -ForegroundColor Yellow
-Invoke-WebRequest -Uri $downloadUrl -OutFile $archivePath -UseBasicParsing
+if (Get-Command curl.exe -ErrorAction SilentlyContinue) {
+    & curl.exe -fSL -o $archivePath $downloadUrl
+} else {
+    Invoke-WebRequest -Uri $downloadUrl -OutFile $archivePath -UseBasicParsing
+}
 
 Write-Host "Extracting installer..." -ForegroundColor Yellow
 tar.exe -xzf $archivePath -C $tempDir
