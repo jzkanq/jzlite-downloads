@@ -11,7 +11,7 @@
 
 set -e
 
-VERSION="1.0.3"
+VERSION="1.0.4"
 REPO_URL="https://github.com/jzkanq/jzlite-downloads"
 RAW_BASE="https://raw.githubusercontent.com/jzkanq/jzlite-downloads/main"
 RELEASE_BASE="https://github.com/jzkanq/jzlite-downloads/releases/download/v${VERSION}"
@@ -77,13 +77,43 @@ else
 fi
 TEMP_DIR="/tmp/jzlite-test"
 
-ACTION="persistent"
+ACTION=""
 if [ "$1" = "--temporary" ] || [ "$1" = "-t" ] || [ "$1" = "temp" ]; then
     ACTION="temporary"
 elif [ "$1" = "--uninstall" ] || [ "$1" = "-u" ] || [ "$1" = "uninstall" ]; then
     ACTION="uninstall"
 elif [ "$1" = "--persistent" ] || [ "$1" = "-p" ] || [ "$1" = "persistent" ]; then
     ACTION="persistent"
+fi
+
+if [ -z "$ACTION" ]; then
+    if [ -t 0 ]; then
+        echo "============================================================"
+        echo "                   JZLite Setup Menu"
+        echo "============================================================"
+        echo ""
+        echo "  [1] Install Persistently (Recommended)"
+        echo "      Installs to /mnt/userdata/jzlite with autostart on boot."
+        echo ""
+        echo "  [2] Temporary Clean Run (RAM-only)"
+        echo "      Runs from /tmp/jzlite-test and disappears after reboot."
+        echo ""
+        echo "  [3] Uninstall"
+        echo "      Stops all services and removes JZLite."
+        echo ""
+        echo "  [4] Exit"
+        echo ""
+        printf "Choose [1-4] (default: 1): "
+        read -r CHOICE
+        case "$CHOICE" in
+            2) ACTION="temporary" ;;
+            3) ACTION="uninstall" ;;
+            4) echo "Exiting."; exit 0 ;;
+            *) ACTION="persistent" ;;
+        esac
+    else
+        ACTION="persistent"
+    fi
 fi
 
 if [ "$ACTION" = "uninstall" ]; then

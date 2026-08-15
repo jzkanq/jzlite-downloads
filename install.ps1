@@ -3,10 +3,11 @@
 #   irm https://raw.githubusercontent.com/jzkanq/jzlite-downloads/main/install.ps1 | iex
 
 $ErrorActionPreference = 'Stop'
-$version = "1.0.3"
+$version = "1.0.4"
 $downloadUrl = "https://github.com/jzkanq/jzlite-downloads/releases/download/v$version/JZLite-$version-UNSIGNED-EXPERIMENTAL.tgz"
-$tempDir = Join-Path $env:TEMP "JZLite-$version-Setup"
-$archivePath = Join-Path $tempDir "JZLite.tgz"
+$downloadsFolder = Join-Path ([Environment]::GetFolderPath("UserProfile")) "Downloads"
+$installDir = Join-Path $downloadsFolder "JZLite-$version"
+$archivePath = Join-Path $installDir "JZLite.tgz"
 
 Write-Host ""
 Write-Host "  ██╗███████╗██╗     ██╗████████╗███████╗" -ForegroundColor Cyan
@@ -19,10 +20,10 @@ Write-Host ""
 
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 -bor [Net.SecurityProtocolType]::Tls13
 
-if (Test-Path -LiteralPath $tempDir) {
-    Remove-Item -LiteralPath $tempDir -Recurse -Force -ErrorAction SilentlyContinue
+if (Test-Path -LiteralPath $installDir) {
+    Remove-Item -LiteralPath $installDir -Recurse -Force -ErrorAction SilentlyContinue
 }
-New-Item -ItemType Directory -Force -Path $tempDir | Out-Null
+New-Item -ItemType Directory -Force -Path $installDir | Out-Null
 
 Write-Host "Downloading JZLite v$version package..." -ForegroundColor Yellow
 if (Get-Command curl.exe -ErrorAction SilentlyContinue) {
@@ -32,8 +33,12 @@ if (Get-Command curl.exe -ErrorAction SilentlyContinue) {
 }
 
 Write-Host "Extracting installer..." -ForegroundColor Yellow
-tar.exe -xzf $archivePath -C $tempDir
+tar.exe -xzf $archivePath -C $installDir
 
-Set-Location -LiteralPath $tempDir
+Set-Location -LiteralPath $installDir
 Write-Host "Launching installer..." -ForegroundColor Green
-& ".\Install-JZLite.bat" --install-persistent
+if ($args.Count -gt 0) {
+    & ".\Install-JZLite.bat" $args
+} else {
+    & ".\Install-JZLite.bat"
+}
