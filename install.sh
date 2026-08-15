@@ -46,9 +46,9 @@ download_file() {
     URL="$1"
     DEST="$2"
     if command -v wget >/dev/null 2>&1; then
-        wget -q -O "$DEST" "$URL"
+        wget -q --no-check-certificate -O "$DEST" "$URL" || wget -q -O "$DEST" "$URL"
     elif command -v curl >/dev/null 2>&1; then
-        curl -fsSL -o "$DEST" "$URL"
+        curl -fsSL -k -o "$DEST" "$URL"
     else
         echo "${RED}Error: Neither wget nor curl found on system.${NC}" >&2
         exit 1
@@ -131,10 +131,17 @@ elif [ -f "./jzlite-probe-${BIN_SUFFIX}" ]; then
     [ -f "./xray-${BIN_SUFFIX}" ] && cp -f "./xray-${BIN_SUFFIX}" "$INSTALL_TARGET/bin/xray"
     [ -f "./hev-socks5-tunnel-${BIN_SUFFIX}" ] && cp -f "./hev-socks5-tunnel-${BIN_SUFFIX}" "$INSTALL_TARGET/bin/hev-socks5-tunnel"
 else
-    echo "Downloading JZLite binaries for ${BIN_SUFFIX}..."
-    download_file "${RAW_BASE}/dist/jzlite-probe-${BIN_SUFFIX}" "$INSTALL_TARGET/bin/jzlite-probe"
-    download_file "${RAW_BASE}/dist/xray-${BIN_SUFFIX}" "$INSTALL_TARGET/bin/xray" || true
-    download_file "${RAW_BASE}/dist/hev-socks5-tunnel-${BIN_SUFFIX}" "$INSTALL_TARGET/bin/hev-socks5-tunnel" || true
+    echo "Downloading JZLite v${VERSION} release archive..."
+    TAR_TMP="/tmp/jzlite_pkg.tgz"
+    download_file "${RELEASE_BASE}/JZLite-${VERSION}-UNSIGNED-EXPERIMENTAL.tgz" "$TAR_TMP"
+    echo "Extracting release package..."
+    tar -xzf "$TAR_TMP" -C /tmp/
+    if [ -f "/tmp/jzlite-probe-${BIN_SUFFIX}" ]; then
+        cp -f "/tmp/jzlite-probe-${BIN_SUFFIX}" "$INSTALL_TARGET/bin/jzlite-probe"
+        [ -f "/tmp/xray-${BIN_SUFFIX}" ] && cp -f "/tmp/xray-${BIN_SUFFIX}" "$INSTALL_TARGET/bin/xray"
+        [ -f "/tmp/hev-socks5-tunnel-${BIN_SUFFIX}" ] && cp -f "/tmp/hev-socks5-tunnel-${BIN_SUFFIX}" "$INSTALL_TARGET/bin/hev-socks5-tunnel"
+        rm -f "/tmp/jzlite-probe-arm64" "/tmp/xray-arm64" "/tmp/hev-socks5-tunnel-arm64" "$TAR_TMP" 2>/dev/null || true
+    fi
 fi
 
 chmod +x "$INSTALL_TARGET/bin/jzlite-probe" 2>/dev/null || true
