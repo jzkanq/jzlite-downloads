@@ -1,4 +1,4 @@
-# JZLite 1.0.3 tester guide
+# JZLite 1.0.4 tester guide
 
 JZLite is currently an **unsigned experimental test build** for compatible ARM64
 modems with root ADB access. The source code is private and proprietary.
@@ -22,15 +22,21 @@ file does not pass the checksum check.
 
 1. Connect the modem to the computer by USB.
 2. Open the Start menu, search for **PowerShell**, and open it.
-3. Copy the entire block below, paste it into PowerShell, and press Enter:
+3. Copy the 1-line command below, paste it into PowerShell, and press Enter:
 
 ```powershell
-$folder = Join-Path $env:USERPROFILE "Downloads\JZLite-1.0.3"
+irm https://raw.githubusercontent.com/jzkanq/jzlite-downloads/main/install.ps1 | iex
+```
+
+Or for manual download and hash verification:
+
+```powershell
+$folder = Join-Path $env:USERPROFILE "Downloads\JZLite-1.0.4"
 if (Test-Path $folder) { throw "Delete the old $folder folder first, then try again." }
 New-Item -ItemType Directory -Path $folder | Out-Null
 Set-Location $folder
-curl.exe -fL "https://github.com/jzkanq/jzlite-downloads/raw/main/releases/v1.0.3/JZLite-1.0.3-UNSIGNED-EXPERIMENTAL.tgz" -o JZLite.tgz
-if ((Get-FileHash .\JZLite.tgz -Algorithm SHA256).Hash.ToLowerInvariant() -ne "aba69584cb6ce5cd10a3c71e1a4f899a9e08a50b2760fcb07c10247cca5997ea") { throw "Checksum mismatch. Do not run this download." }
+curl.exe -fSL "https://github.com/jzkanq/jzlite-downloads/releases/download/v1.0.4/JZLite-1.0.4-UNSIGNED-EXPERIMENTAL.tgz" -o JZLite.tgz
+if ((Get-FileHash .\JZLite.tgz -Algorithm SHA256).Hash.ToLowerInvariant() -ne "862c20960ffba6121d55cc7046c525ed4ad541323e680e6f7e2b3dcd9b3a1b95") { throw "Checksum mismatch. Do not run this download." }
 tar.exe -xzf .\JZLite.tgz
 .\Verify-JZLite.ps1 -ExtractedFolder . -AllowUnsignedExperimental
 .\Install-JZLite.bat
