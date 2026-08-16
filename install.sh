@@ -327,14 +327,14 @@ chmod +x "$INSTALL_TARGET/bin/start-jzlite.sh"
 # If persistent, create init service
 if [ "$ACTION" = "persistent" ]; then
     INIT_DIR=""
-    if [ -d "/etc_rw/init.d" ]; then
+    if [ -d "/etc_rw/init.d" ] && [ -w "/etc_rw/init.d" ]; then
         INIT_DIR="/etc_rw/init.d"
-    elif [ -d "/etc/init.d" ]; then
+    elif [ -d "/etc/init.d" ] && [ -w "/etc/init.d" ]; then
         INIT_DIR="/etc/init.d"
     fi
 
     if [ -n "$INIT_DIR" ]; then
-        cat <<EOF > "$INIT_DIR/jzlite"
+        cat <<EOF > "$INIT_DIR/jzlite" 2>/dev/null || true
 #!/bin/sh
 case "\$1" in
     start)
