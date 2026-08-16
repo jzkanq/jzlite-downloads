@@ -313,10 +313,12 @@ nohup "\$DIR/bin/jzlite-probe" \\
     -profiles "\$DIR/data/profiles.json" \\
     -settings "\$DIR/data/settings.json" \\
     -license "\$DIR/data/license.json" \\
-    -binding "\$DIR/data/license-binding.txt" \\
-    -binding-version "\$DIR/data/license-binding-version.txt" \\
+    -license-binding "\$DIR/data/license-binding.txt" \\
+    -license-binding-version "\$DIR/data/license-binding-version.txt" \\
     -license-key "\$DIR/data/license-key.txt" \\
-    -runtime-dir "\$DIR/run" \\
+    -xray-runtime "\$DIR/run" \\
+    -xray "\$DIR/bin/xray" \\
+    -hev "\$DIR/bin/hev-socks5-tunnel" \\
     $REDIRECT_FLAG \\
     </dev/null >> "\$DIR/run/jzlite.log" 2>&1 &
 EOF
