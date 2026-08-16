@@ -308,7 +308,7 @@ cat <<EOF > "$INSTALL_TARGET/bin/start-jzlite.sh"
 DIR="\$(cd "\$(dirname "\$0")/.." && pwd)"
 cd "\$DIR"
 
-GOGC=30 GOMEMLIMIT=28MiB exec "\$DIR/bin/jzlite-probe" \\
+nohup "\$DIR/bin/jzlite-probe" \\
     -auth "\$DIR/data/auth.json" \\
     -profiles "\$DIR/data/profiles.json" \\
     -settings "\$DIR/data/settings.json" \\
@@ -318,7 +318,7 @@ GOGC=30 GOMEMLIMIT=28MiB exec "\$DIR/bin/jzlite-probe" \\
     -license-key "\$DIR/data/license-key.txt" \\
     -runtime-dir "\$DIR/run" \\
     $REDIRECT_FLAG \\
-    >> "\$DIR/run/jzlite.log" 2>&1 &
+    </dev/null >> "\$DIR/run/jzlite.log" 2>&1 &
 EOF
 chmod +x "$INSTALL_TARGET/bin/start-jzlite.sh"
 
