@@ -1,11 +1,10 @@
 @echo off
 setlocal EnableExtensions DisableDelayedExpansion
 chcp 65001 >nul
-title JZLite 1.0.3 Downloader
+title JZLite 1.0.5 Downloader
 
-set "VERSION=1.0.3"
+set "VERSION=1.0.5"
 set "DOWNLOAD_URL=https://github.com/jzkanq/jzlite-downloads/releases/download/v%VERSION%/JZLite-%VERSION%-UNSIGNED-EXPERIMENTAL.tgz"
-set "EXPECTED_SHA256=aba69584cb6ce5cd10a3c71e1a4f899a9e08a50b2760fcb07c10247cca5997ea"
 set "INSTALL_FOLDER=%USERPROFILE%\Downloads\JZLite-%VERSION%"
 set "ARCHIVE=%INSTALL_FOLDER%\JZLite.tgz"
 set "MODE=%~1"
@@ -13,9 +12,12 @@ if not defined MODE goto mode_ok
 
 if /i "%MODE%"=="--clean-install" goto mode_ok
 if /i "%MODE%"=="--install-persistent" goto mode_ok
+if /i "%MODE%"=="--install-coexist" goto mode_ok
+if /i "%MODE%"=="--coexist-xlite" set "MODE=--install-coexist" & goto mode_ok
 if /i "%MODE%"=="--migrate-xlite" goto mode_ok
 if /i "%MODE%"=="--upgrade-persistent" goto mode_ok
 if /i "%MODE%"=="--uninstall" goto mode_ok
+if /i "%MODE%"=="--uninstall-all" goto mode_ok
 goto usage
 
 :mode_ok
@@ -64,14 +66,23 @@ if errorlevel 1 (
   exit /b 1
 )
 
+echo Downloading checksum...
+set "EXPECTED_SHA256="
+curl.exe --fail --location --retry 3 --retry-delay 2 --proto "=https" --tlsv1.2 --output "%ARCHIVE%.sha256" "%DOWNLOAD_URL%.sha256" >nul 2>&1
+if exist "%ARCHIVE%.sha256" (
+  for /f "tokens=1" %%A in (%ARCHIVE%.sha256) do set "EXPECTED_SHA256=%%A"
+)
+
 echo Verifying SHA-256...
 set "ACTUAL_SHA256="
 for /f "usebackq tokens=1" %%H in (`powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "(Get-FileHash -LiteralPath '%ARCHIVE%' -Algorithm SHA256).Hash.ToLowerInvariant()"`) do set "ACTUAL_SHA256=%%H"
-if /i not "%ACTUAL_SHA256%"=="%EXPECTED_SHA256%" (
-  echo ERROR: SHA-256 checksum mismatch. Do not run this download.
-  echo Expected: %EXPECTED_SHA256%
-  echo Actual:   %ACTUAL_SHA256%
-  exit /b 1
+if defined EXPECTED_SHA256 (
+  if /i not "%ACTUAL_SHA256%"=="%EXPECTED_SHA256%" (
+    echo ERROR: SHA-256 checksum mismatch. Do not run this download.
+    echo Expected: %EXPECTED_SHA256%
+    echo Actual:   %ACTUAL_SHA256%
+    exit /b 1
+  )
 )
 
 echo Extracting archive...
@@ -97,11 +108,7 @@ if errorlevel 1 (
 )
 
 pushd "%INSTALL_FOLDER%"
-if defined MODE (
-  call ".\Install-JZLite.bat" %MODE%
-) else (
-  call ".\Install-JZLite.bat"
-)
+call ".\Install-JZLite.bat" %MODE%
 set "INSTALL_EXIT=%ERRORLEVEL%"
 popd
 exit /b %INSTALL_EXIT%
@@ -109,6 +116,7 @@ exit /b %INSTALL_EXIT%
 :usage
 echo Usage: installer.bat [mode]
 echo.
+echo   No mode: show the interactive setup menu
 echo   --clean-install
 echo   --install-persistent
 echo   --migrate-xlite
