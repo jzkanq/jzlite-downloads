@@ -277,6 +277,12 @@ else
     TAR_TMP="/tmp/jzlite_pkg.tgz"
     download_file "${RELEASE_BASE}/JZLite-${VERSION}-UNSIGNED-EXPERIMENTAL.tgz" "$TAR_TMP"
     if [ ! -s "$TAR_TMP" ]; then
+        download_file "${RAW_BASE}/releases/v${VERSION}/JZLite-${VERSION}-UNSIGNED-EXPERIMENTAL.tgz" "$TAR_TMP"
+    fi
+    if [ ! -s "$TAR_TMP" ]; then
+        download_file "${RELEASE_BASE}/jzlite.tgz" "$TAR_TMP"
+    fi
+    if [ ! -s "$TAR_TMP" ]; then
         echo "${RED}Error: Release archive is empty or failed to download.${NC}" >&2
         exit 1
     fi
