@@ -3,7 +3,7 @@
 #   irm https://raw.githubusercontent.com/jzkanq/jzlite-downloads/main/install.ps1 | iex
 
 $ErrorActionPreference = 'Stop'
-$version = "1.0.4"
+$version = "1.0.5"
 $downloadUrl = "https://github.com/jzkanq/jzlite-downloads/releases/download/v$version/JZLite-$version-UNSIGNED-EXPERIMENTAL.tgz"
 $downloadsFolder = Join-Path ([Environment]::GetFolderPath("UserProfile")) "Downloads"
 $installDir = Join-Path $downloadsFolder "JZLite-$version"

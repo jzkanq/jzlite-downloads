@@ -112,6 +112,8 @@ if [ "$1" = "--temporary" ] || [ "$1" = "-t" ] || [ "$1" = "temp" ]; then
 elif [ "$1" = "--coexist" ] || [ "$1" = "-c" ] || [ "$1" = "coexist" ]; then
     ACTION="persistent"
     COEXIST_XLITE=1
+elif [ "$1" = "--uninstall-all" ] || [ "$1" = "--wipe" ]; then
+    ACTION="uninstall-all"
 elif [ "$1" = "--uninstall" ] || [ "$1" = "-u" ] || [ "$1" = "uninstall" ]; then
     ACTION="uninstall"
 elif [ "$1" = "--persistent" ] || [ "$1" = "-p" ] || [ "$1" = "persistent" ]; then
@@ -149,17 +151,63 @@ elif [ -z "$1" ] && [ -c /dev/tty ]; then
             ACTION="persistent"
             ;;
     esac
+=======
 fi
 
-if [ "$ACTION" = "uninstall" ]; then
-    echo "${YELLOW}Uninstalling JZLite...${NC}"
+if [ -z "$ACTION" ]; then
+    if [ -t 0 ]; then
+        echo "============================================================"
+        echo "                   JZLite Setup Menu"
+        echo "============================================================"
+        echo ""
+        echo "  [1] Install Persistently (Recommended)"
+        echo "      Installs to /mnt/userdata/jzlite with autostart on boot."
+        echo ""
+        echo "  [2] Temporary Clean Run (RAM-only)"
+        echo "      Runs from /tmp/jzlite-test and disappears after reboot."
+        echo ""
+        echo "  [3] Uninstall JZLite"
+        echo "      Stops JZLite services and restores XLite if backup exists."
+        echo ""
+        echo "  [4] Complete Wipe (Remove JZLite & XLite)"
+        echo "      Completely removes JZLite and deletes XLite, restoring stock."
+        echo ""
+        echo "  [5] Exit"
+        echo ""
+        printf "Choose [1-5] (default: 1): "
+        read -r CHOICE
+        case "$CHOICE" in
+            2) ACTION="temporary" ;;
+            3) ACTION="uninstall" ;;
+            4) ACTION="uninstall-all" ;;
+            5) echo "Exiting."; exit 0 ;;
+            *) ACTION="persistent" ;;
+        esac
+    else
+        ACTION="persistent"
+    fi
+>>>>>>> 2a377df (release: JZLite v1.0.5 with multi-bridge discovery, mixed mode, and system error event logging)
+fi
+
+if [ "$ACTION" = "uninstall" ] || [ "$ACTION" = "uninstall-all" ]; then
+    echo "${YELLOW}Uninstalling...${NC}"
     killall jzlite-probe 2>/dev/null || true
     killall xray 2>/dev/null || true
     killall hev-socks5-tunnel 2>/dev/null || true
     rm -rf "$PERSISTENT_DIR" "$TEMP_DIR" 2>/dev/null || true
     rm -f /etc_rw/init.d/jzlite 2>/dev/null || true
     rm -f /etc/init.d/jzlite 2>/dev/null || true
-    echo "${GREEN}JZLite uninstalled successfully.${NC}"
+    if [ "$ACTION" = "uninstall-all" ]; then
+        rm -rf /mnt/userdata/xlite /mnt/userdata/xlite.jzlite-backup /mnt/userdata/xlite-backup 2>/dev/null || true
+        echo "#!/bin/sh\nexit 0" > /mnt/userdata/xlite/XLITE 2>/dev/null || true
+        chmod 700 /mnt/userdata/xlite/XLITE 2>/dev/null || true
+        echo "${GREEN}JZLite and XLite completely removed. Stock networking restored.${NC}"
+    else
+        if [ -d /mnt/userdata/xlite.jzlite-backup ]; then
+            mv /mnt/userdata/xlite.jzlite-backup /mnt/userdata/xlite 2>/dev/null || true
+        fi
+        echo "${GREEN}JZLite uninstalled successfully.${NC}"
+    fi
     exit 0
 fi
 
