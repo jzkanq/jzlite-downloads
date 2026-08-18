@@ -36,7 +36,7 @@ if (Test-Path $folder) { throw "Delete the old $folder folder first, then try ag
 New-Item -ItemType Directory -Path $folder | Out-Null
 Set-Location $folder
 curl.exe -fSL "https://github.com/jzkanq/jzlite-downloads/releases/download/v1.0.5/JZLite-1.0.5-UNSIGNED-EXPERIMENTAL.tgz" -o JZLite.tgz
-if ((Get-FileHash .\JZLite.tgz -Algorithm SHA256).Hash.ToLowerInvariant() -ne "f702ddfa2b3920c8189f5f2294ad6c8c9989a5e3d0f0062ae63a417964072d63") { throw "Checksum mismatch. Do not run this download." }
+if ((Get-FileHash .\JZLite.tgz -Algorithm SHA256).Hash.ToLowerInvariant() -ne "4584d57a2da508f680e33c39b1272942af2544571dcbdc65a25e5897b015e8a6") { throw "Checksum mismatch. Do not run this download." }
 tar.exe -xzf .\JZLite.tgz
 .\Verify-JZLite.ps1 -ExtractedFolder . -AllowUnsignedExperimental
 .\Install-JZLite.bat

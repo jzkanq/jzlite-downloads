@@ -213,17 +213,34 @@ fi
 # Stop existing processes
 killall jzlite-probe 2>/dev/null || true
 
-# If binaries exist in local dist folder, copy them; otherwise download from release
-if [ -f "./dist/jzlite-probe-${BIN_SUFFIX}" ]; then
-    echo "Installing from local dist directory..."
+# If binaries exist in local package/dist folder, copy them; otherwise download from release
+SCRIPT_DIR="$(cd "$(dirname "$0")" 2>/dev/null && pwd || echo "/tmp")"
+
+if [ -f "$SCRIPT_DIR/dist/jzlite-probe-${BIN_SUFFIX}" ]; then
+    echo "Installing from local dist directory ($SCRIPT_DIR/dist)..."
+    cp -f "$SCRIPT_DIR/dist/jzlite-probe-${BIN_SUFFIX}" "$INSTALL_TARGET/bin/jzlite-probe"
+    [ -f "$SCRIPT_DIR/dist/xray-${BIN_SUFFIX}" ] && cp -f "$SCRIPT_DIR/dist/xray-${BIN_SUFFIX}" "$INSTALL_TARGET/bin/xray"
+    [ -f "$SCRIPT_DIR/dist/hev-socks5-tunnel-${BIN_SUFFIX}" ] && cp -f "$SCRIPT_DIR/dist/hev-socks5-tunnel-${BIN_SUFFIX}" "$INSTALL_TARGET/bin/hev-socks5-tunnel"
+elif [ -f "$SCRIPT_DIR/jzlite-probe-${BIN_SUFFIX}" ]; then
+    echo "Installing from package directory ($SCRIPT_DIR)..."
+    cp -f "$SCRIPT_DIR/jzlite-probe-${BIN_SUFFIX}" "$INSTALL_TARGET/bin/jzlite-probe"
+    [ -f "$SCRIPT_DIR/xray-${BIN_SUFFIX}" ] && cp -f "$SCRIPT_DIR/xray-${BIN_SUFFIX}" "$INSTALL_TARGET/bin/xray"
+    [ -f "$SCRIPT_DIR/hev-socks5-tunnel-${BIN_SUFFIX}" ] && cp -f "$SCRIPT_DIR/hev-socks5-tunnel-${BIN_SUFFIX}" "$INSTALL_TARGET/bin/hev-socks5-tunnel"
+elif [ -f "./dist/jzlite-probe-${BIN_SUFFIX}" ]; then
+    echo "Installing from current dist directory..."
     cp -f "./dist/jzlite-probe-${BIN_SUFFIX}" "$INSTALL_TARGET/bin/jzlite-probe"
     [ -f "./dist/xray-${BIN_SUFFIX}" ] && cp -f "./dist/xray-${BIN_SUFFIX}" "$INSTALL_TARGET/bin/xray"
     [ -f "./dist/hev-socks5-tunnel-${BIN_SUFFIX}" ] && cp -f "./dist/hev-socks5-tunnel-${BIN_SUFFIX}" "$INSTALL_TARGET/bin/hev-socks5-tunnel"
 elif [ -f "./jzlite-probe-${BIN_SUFFIX}" ]; then
-    echo "Installing from current directory..."
+    echo "Installing from current working directory..."
     cp -f "./jzlite-probe-${BIN_SUFFIX}" "$INSTALL_TARGET/bin/jzlite-probe"
     [ -f "./xray-${BIN_SUFFIX}" ] && cp -f "./xray-${BIN_SUFFIX}" "$INSTALL_TARGET/bin/xray"
     [ -f "./hev-socks5-tunnel-${BIN_SUFFIX}" ] && cp -f "./hev-socks5-tunnel-${BIN_SUFFIX}" "$INSTALL_TARGET/bin/hev-socks5-tunnel"
+elif [ -f "/tmp/jzlite-probe-${BIN_SUFFIX}" ]; then
+    echo "Installing from /tmp directory..."
+    cp -f "/tmp/jzlite-probe-${BIN_SUFFIX}" "$INSTALL_TARGET/bin/jzlite-probe"
+    [ -f "/tmp/xray-${BIN_SUFFIX}" ] && cp -f "/tmp/xray-${BIN_SUFFIX}" "$INSTALL_TARGET/bin/xray"
+    [ -f "/tmp/hev-socks5-tunnel-${BIN_SUFFIX}" ] && cp -f "/tmp/hev-socks5-tunnel-${BIN_SUFFIX}" "$INSTALL_TARGET/bin/hev-socks5-tunnel"
 else
     echo "Downloading JZLite v${VERSION} release archive..."
     TAR_TMP="/tmp/jzlite_pkg.tgz"
