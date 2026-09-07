@@ -156,9 +156,36 @@ if [ "$ACTION" = "uninstall" ]; then
     killall jzlite-probe 2>/dev/null || true
     killall xray 2>/dev/null || true
     killall hev-socks5-tunnel 2>/dev/null || true
-    rm -rf "$PERSISTENT_DIR" "$TEMP_DIR" 2>/dev/null || true
-    rm -f /etc_rw/init.d/jzlite 2>/dev/null || true
-    rm -f /etc/init.d/jzlite 2>/dev/null || true
+
+    # Clean up iptables and routing table 100 to prevent network blackholing
+    ip rule del priority 11000 fwmark 0x4a5a/0xffff table 100 2>/dev/null || true
+    ip route flush table 100 2>/dev/null || true
+    for table in nat mangle filter; do
+        while iptables -w 2 -t "$table" -D PREROUTING -j JZLITE 2>/dev/null; do :; done
+        while iptables -w 2 -t "$table" -D OUTPUT -j JZLITE 2>/dev/null; do :; done
+        iptables -w 2 -t "$table" -F JZLITE 2>/dev/null || true
+        iptables -w 2 -t "$table" -X JZLITE 2>/dev/null || true
+    done
+    while ip6tables -w 2 -t filter -D FORWARD -j REJECT 2>/dev/null; do :; done
+    while iptables -w 2 -t filter -D FORWARD -o jzlite0 -j ACCEPT 2>/dev/null; do :; done
+    while iptables -w 2 -t filter -D FORWARD -i jzlite0 -j ACCEPT 2>/dev/null; do :; done
+    while iptables -w 2 -t nat -D POSTROUTING -o jzlite0 -j MASQUERADE 2>/dev/null; do :; done
+
+    # Clean up boot slot safely
+    if [ -d /mnt/userdata/xlite.jzlite-backup ]; then
+        rm -rf /mnt/userdata/xlite 2>/dev/null || true
+        mv /mnt/userdata/xlite.jzlite-backup /mnt/userdata/xlite 2>/dev/null || true
+    elif [ -f /mnt/userdata/xlite/XLITE ] && grep -q 'JZLite' /mnt/userdata/xlite/XLITE 2>/dev/null; then
+        mkdir -p /mnt/userdata/xlite 2>/dev/null || true
+        cat <<'XLITE_CLEAN' > /mnt/userdata/xlite/XLITE
+#!/bin/sh
+exit 0
+XLITE_CLEAN
+        chmod 700 /mnt/userdata/xlite/XLITE 2>/dev/null || true
+    fi
+
+    rm -rf "$PERSISTENT_DIR" "$TEMP_DIR" /tmp/jzlite-runtime 2>/dev/null || true
+    rm -f /etc_rw/init.d/jzlite /etc/init.d/jzlite /etc/rc.d/*jzlite* /etc_rw/rcS.d/*jzlite* 2>/dev/null || true
     echo "${GREEN}JZLite uninstalled successfully.${NC}"
     exit 0
 fi
@@ -331,6 +358,34 @@ cat <<EOF > "$INSTALL_TARGET/bin/start-jzlite.sh"
 DIR="\$(cd "\$(dirname "\$0")/.." && pwd)"
 cd "\$DIR"
 
+case "\$1" in
+    stop)
+        killall jzlite-probe 2>/dev/null || true
+        killall xray 2>/dev/null || true
+        killall hev-socks5-tunnel 2>/dev/null || true
+        exit 0
+        ;;
+    restart)
+        killall jzlite-probe 2>/dev/null || true
+        killall xray 2>/dev/null || true
+        killall hev-socks5-tunnel 2>/dev/null || true
+        sleep 1
+        ;;
+    *)
+        ;;
+esac
+
+# Network & route sanity check: flush stale table 100 or broken routing on boot
+ip rule del priority 11000 2>/dev/null || true
+ip route flush table 100 2>/dev/null || true
+
+# Prepare runtime tmpfs directory to eliminate flash wear
+mkdir -p /tmp/jzlite-runtime 2>/dev/null || true
+
+# Memory Governor parameters for 256MB ARM64 modems
+export GOMEMLIMIT=16MiB
+export GOGC=15
+
 nohup "\$DIR/bin/jzlite-probe" \\
     -auth "\$DIR/data/auth.json" \\
     -profiles "\$DIR/data/profiles.json" \\
@@ -339,44 +394,43 @@ nohup "\$DIR/bin/jzlite-probe" \\
     -license-binding "\$DIR/data/license-binding.txt" \\
     -license-binding-version "\$DIR/data/license-binding-version.txt" \\
     -license-key "\$DIR/data/license-key.txt" \\
-    -xray-runtime "\$DIR/run" \\
+    -xray-runtime "/tmp/jzlite-runtime" \\
     -xray "\$DIR/bin/xray" \\
     -hev "\$DIR/bin/hev-socks5-tunnel" \\
     $REDIRECT_FLAG \\
-    </dev/null >> "\$DIR/run/jzlite.log" 2>&1 &
+    </dev/null >> "/tmp/jzlite-runtime/jzlite.log" 2>&1 &
 EOF
 chmod +x "$INSTALL_TARGET/bin/start-jzlite.sh"
 
-# If persistent, create init service
-if [ "$ACTION" = "persistent" ]; then
-    INIT_DIR=""
-    if [ -d "/etc_rw/init.d" ] && [ -w "/etc_rw/init.d" ]; then
-        INIT_DIR="/etc_rw/init.d"
-    elif [ -d "/etc/init.d" ] && [ -w "/etc/init.d" ]; then
-        INIT_DIR="/etc/init.d"
-    fi
+# Purge any legacy or rogue init scripts that conflict with baseband or trip watchdog
+rm -f /etc_rw/init.d/jzlite /etc/init.d/jzlite /etc/rc.d/*jzlite* /etc_rw/rcS.d/*jzlite* 2>/dev/null || true
 
-    if [ -n "$INIT_DIR" ]; then
-        cat <<EOF > "$INIT_DIR/jzlite" 2>/dev/null || true
+# If persistent, safely wire into firmware XLite boot-slot shim
+if [ "$ACTION" = "persistent" ]; then
+    if [ "$COEXIST_XLITE" = "1" ]; then
+        echo "${CYAN}Coexist mode: XLite boot configuration left intact.${NC}"
+    else
+        # Check if firmware has XLite boot hook
+        if [ "$(readlink /etc/init.d/XLITE 2>/dev/null)" = "/mnt/userdata/xlite/XLITE" ] || [ -f "/mnt/userdata/xlite/XLITE" ] || [ -d "/mnt/userdata/xlite" ]; then
+            if [ -d /mnt/userdata/xlite ] && ! grep -q '^# JZLite XLITE boot-slot shim' /mnt/userdata/xlite/XLITE 2>/dev/null; then
+                echo "Backing up existing XLite installation..."
+                rm -rf /mnt/userdata/xlite.jzlite-backup 2>/dev/null || true
+                mv /mnt/userdata/xlite /mnt/userdata/xlite.jzlite-backup 2>/dev/null || true
+            fi
+            mkdir -p /mnt/userdata/xlite 2>/dev/null || true
+            cat <<'XLITE_BOOT_SHIM' > /mnt/userdata/xlite/XLITE
 #!/bin/sh
-case "\$1" in
-    start)
-        "$PERSISTENT_DIR/bin/start-jzlite.sh"
-        ;;
-    stop)
-        killall jzlite-probe 2>/dev/null || true
-        ;;
-    restart)
-        killall jzlite-probe 2>/dev/null || true
-        sleep 1
-        "$PERSISTENT_DIR/bin/start-jzlite.sh"
-        ;;
-    *)
-        "$PERSISTENT_DIR/bin/start-jzlite.sh"
-        ;;
-esac
-EOF
-        chmod +x "$INIT_DIR/jzlite" 2>/dev/null || true
+# JZLite XLITE boot-slot shim v1
+if [ -x /mnt/userdata/jzlite/bin/start-jzlite.sh ]; then
+    exec /mnt/userdata/jzlite/bin/start-jzlite.sh "$@"
+elif [ -x /mnt/userdata/jzlite/JZLITE ]; then
+    exec /mnt/userdata/jzlite/JZLITE "$@"
+fi
+exit 0
+XLITE_BOOT_SHIM
+            chmod 700 /mnt/userdata/xlite/XLITE 2>/dev/null || true
+            echo "${GREEN}✔ Wired JZLite into firmware boot slot (/mnt/userdata/xlite/XLITE).${NC}"
+        fi
     fi
 fi
 
@@ -406,7 +460,10 @@ if pidof jzlite-probe >/dev/null 2>&1 || pgrep jzlite-probe >/dev/null 2>&1; the
     echo "${GREEN}✔ JZLite v${VERSION} installed and started successfully!${NC}"
 else
     echo "${GREEN}✔ JZLite v${VERSION} installed successfully!${NC}"
-    if [ -f "$INSTALL_TARGET/run/jzlite.log" ] && [ -s "$INSTALL_TARGET/run/jzlite.log" ]; then
+    if [ -f "/tmp/jzlite-runtime/jzlite.log" ] && [ -s "/tmp/jzlite-runtime/jzlite.log" ]; then
+        echo "${YELLOW}Startup Log Preview:${NC}"
+        tail -n 5 "/tmp/jzlite-runtime/jzlite.log" 2>/dev/null || true
+    elif [ -f "$INSTALL_TARGET/run/jzlite.log" ] && [ -s "$INSTALL_TARGET/run/jzlite.log" ]; then
         echo "${YELLOW}Startup Log Preview:${NC}"
         tail -n 5 "$INSTALL_TARGET/run/jzlite.log" 2>/dev/null || true
     fi
