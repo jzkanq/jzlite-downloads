@@ -169,6 +169,9 @@ if [ "$ACTION" = "uninstall" ]; then
     while ip6tables -w 2 -t filter -D FORWARD -j REJECT 2>/dev/null; do :; done
     while iptables -w 2 -t filter -D FORWARD -o jzlite0 -j ACCEPT 2>/dev/null; do :; done
     while iptables -w 2 -t filter -D FORWARD -i jzlite0 -j ACCEPT 2>/dev/null; do :; done
+    while iptables -w 2 -t filter -D INPUT -i jzlite0 -j ACCEPT 2>/dev/null; do :; done
+    while iptables -w 2 -t filter -D INPUT -p tcp --dport 10853 -j ACCEPT 2>/dev/null; do :; done
+    while iptables -w 2 -t filter -D INPUT -p udp --dport 10853 -j ACCEPT 2>/dev/null; do :; done
     while iptables -w 2 -t nat -D POSTROUTING -o jzlite0 -j MASQUERADE 2>/dev/null; do :; done
 
     # Clean up boot slot safely
@@ -381,6 +384,10 @@ ip route flush table 100 2>/dev/null || true
 
 # Prepare runtime tmpfs directory to eliminate flash wear
 mkdir -p /tmp/jzlite-runtime 2>/dev/null || true
+
+# Ensure TUN and bridge-nf kernel modules are loaded for OpenWrt/JunWRT
+modprobe tun 2>/dev/null || true
+modprobe br_netfilter 2>/dev/null || true
 
 # Memory Governor parameters for 256MB ARM64 modems
 export GOMEMLIMIT=16MiB
