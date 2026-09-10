@@ -158,7 +158,10 @@ if [ "$ACTION" = "uninstall" ]; then
     killall hev-socks5-tunnel 2>/dev/null || true
 
     # Clean up iptables and routing table 100 to prevent network blackholing
+    ip rule del priority 10000 fwmark 0x4a5a/0xffff table main 2>/dev/null || true
+    ip rule del priority 11000 fwmark 0x4a5b/0xffff table 100 2>/dev/null || true
     ip rule del priority 11000 fwmark 0x4a5a/0xffff table 100 2>/dev/null || true
+    ip rule del priority 11000 2>/dev/null || true
     ip route flush table 100 2>/dev/null || true
     for table in nat mangle filter; do
         while iptables -w 2 -t "$table" -D PREROUTING -j JZLITE 2>/dev/null; do :; done
