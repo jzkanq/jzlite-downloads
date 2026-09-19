@@ -36,7 +36,7 @@ if (Test-Path $folder) { throw "Delete the old $folder folder first, then try ag
 New-Item -ItemType Directory -Path $folder | Out-Null
 Set-Location $folder
 curl.exe -fSL "https://github.com/jzkanq/jzlite-downloads/releases/download/v1.0.5/JZLite-1.0.5-UNSIGNED-EXPERIMENTAL.tgz" -o JZLite.tgz
-if ((Get-FileHash .\JZLite.tgz -Algorithm SHA256).Hash.ToLowerInvariant() -ne "8f8e3db2d5d12be2a19d2ce1d4d7ef2b7d9476769229ff63dda1496f0fc5234e") { throw "Checksum mismatch. Do not run this download." }
+if ((Get-FileHash .\JZLite.tgz -Algorithm SHA256).Hash.ToLowerInvariant() -ne "b92b2627deafc54500c11e5a0f02f4f86caa8bfedcb3f4e1bd0f2624c0f9008a") { throw "Checksum mismatch. Do not run this download." }
 tar.exe -xzf .\JZLite.tgz
 .\Verify-JZLite.ps1 -ExtractedFolder . -AllowUnsignedExperimental
 .\Install-JZLite.bat
@@ -120,7 +120,7 @@ MAC. If the checksum fails, delete the download and report it—do not continue.
 ## Official archive checksum
 
 ```text
-faf0bce4d9db77f93a82e052e2b63eb2338a0aa5251f2a56732c925336a2b68e
+b92b2627deafc54500c11e5a0f02f4f86caa8bfedcb3f4e1bd0f2624c0f9008a
 ```
 
 [View the JZLite 1.0.3 public release](https://github.com/jzkanq/jzlite-downloads/releases/tag/v1.0.3).
