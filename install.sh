@@ -87,6 +87,9 @@ download_file() {
 # Detect architecture
 ARCH="$(uname -m)"
 case "$ARCH" in
+    armv7*|armv8l|armhf|arm)
+        BIN_SUFFIX="armv7"
+        ;;
     aarch64|arm64)
         BIN_SUFFIX="arm64"
         ;;
@@ -192,6 +195,7 @@ XLITE_CLEAN
 
     rm -rf "$PERSISTENT_DIR" "$TEMP_DIR" /tmp/jzlite-runtime 2>/dev/null || true
     rm -f /etc_rw/init.d/jzlite /etc/init.d/jzlite /etc/rc.d/*jzlite* /etc_rw/rcS.d/*jzlite* 2>/dev/null || true
+    [ -f /etc/rc.local ] && sed -i '/start-jzlite\.sh/d' /etc/rc.local 2>/dev/null || true
     echo "${GREEN}JZLite uninstalled successfully.${NC}"
     exit 0
 fi
@@ -297,7 +301,7 @@ else
     cp -f "/tmp/jzlite-probe-${BIN_SUFFIX}" "$INSTALL_TARGET/bin/jzlite-probe"
     [ -f "/tmp/xray-${BIN_SUFFIX}" ] && cp -f "/tmp/xray-${BIN_SUFFIX}" "$INSTALL_TARGET/bin/xray"
     [ -f "/tmp/hev-socks5-tunnel-${BIN_SUFFIX}" ] && cp -f "/tmp/hev-socks5-tunnel-${BIN_SUFFIX}" "$INSTALL_TARGET/bin/hev-socks5-tunnel"
-    rm -f "/tmp/jzlite-probe-arm64" "/tmp/xray-arm64" "/tmp/hev-socks5-tunnel-arm64" "/tmp/jzlite-probe-amd64" "/tmp/xray-amd64" "/tmp/hev-socks5-tunnel-amd64" "$TAR_TMP" 2>/dev/null || true
+    rm -f "/tmp/jzlite-probe-arm64" "/tmp/xray-arm64" "/tmp/hev-socks5-tunnel-arm64" "/tmp/jzlite-probe-armv7" "/tmp/xray-armv7" "/tmp/hev-socks5-tunnel-armv7" "/tmp/jzlite-probe-amd64" "/tmp/xray-amd64" "/tmp/hev-socks5-tunnel-amd64" "$TAR_TMP" 2>/dev/null || true
 fi
 
 chmod +x "$INSTALL_TARGET/bin/jzlite-probe" 2>/dev/null || true
@@ -377,6 +381,11 @@ case "\$1" in
         killall hev-socks5-tunnel 2>/dev/null || true
         sleep 1
         ;;
+    start)
+        if pidof jzlite-probe >/dev/null 2>&1 || pgrep jzlite-probe >/dev/null 2>&1; then
+            exit 0
+        fi
+        ;;
     *)
         ;;
 esac
@@ -407,20 +416,23 @@ nohup "\$DIR/bin/jzlite-probe" \\
     -xray-runtime "/tmp/jzlite-runtime" \\
     -xray "\$DIR/bin/xray" \\
     -hev "\$DIR/bin/hev-socks5-tunnel" \\
-    $REDIRECT_FLAG \\
+    $REDIRECT_FLAG \
     </dev/null >> "/tmp/jzlite-runtime/jzlite.log" 2>&1 &
+exit 0
 EOF
 chmod +x "$INSTALL_TARGET/bin/start-jzlite.sh"
 
-# Purge any legacy or rogue init scripts that conflict with baseband or trip watchdog
-rm -f /etc_rw/init.d/jzlite /etc/init.d/jzlite /etc/rc.d/*jzlite* /etc_rw/rcS.d/*jzlite* 2>/dev/null || true
+# Purge any legacy or rogue init scripts on ZXIC modems that conflict with baseband or trip watchdog
+if [ ! -f /etc/rc.common ]; then
+    rm -f /etc_rw/init.d/jzlite /etc/init.d/jzlite /etc/rc.d/*jzlite* /etc_rw/rcS.d/*jzlite* 2>/dev/null || true
+fi
 
-# If persistent, safely wire into firmware XLite boot-slot shim
+# If persistent, safely wire into firmware boot slots (OpenWrt procd, XLite shim, or rc.local)
 if [ "$ACTION" = "persistent" ]; then
     if [ "$COEXIST_XLITE" = "1" ]; then
         echo "${CYAN}Coexist mode: XLite boot configuration left intact.${NC}"
     else
-        # Check if firmware has XLite boot hook
+        # 1. Check if firmware has XLite boot hook (ZXIC / ZTE modems)
         if [ "$(readlink /etc/init.d/XLITE 2>/dev/null)" = "/mnt/userdata/xlite/XLITE" ] || [ -f "/mnt/userdata/xlite/XLITE" ] || [ -d "/mnt/userdata/xlite" ]; then
             if [ -d /mnt/userdata/xlite ] && ! grep -q '^# JZLite XLITE boot-slot shim' /mnt/userdata/xlite/XLITE 2>/dev/null; then
                 echo "Backing up existing XLite installation..."
@@ -440,6 +452,61 @@ exit 0
 XLITE_BOOT_SHIM
             chmod 700 /mnt/userdata/xlite/XLITE 2>/dev/null || true
             echo "${GREEN}✔ Wired JZLite into firmware boot slot (/mnt/userdata/xlite/XLITE).${NC}"
+        fi
+
+        # 2. OpenWrt / JunWRT native procd service registration
+        if [ -f /etc/rc.common ]; then
+            cat <<EOF > /etc/init.d/jzlite
+#!/bin/sh /etc/rc.common
+START=99
+STOP=10
+
+boot() {
+    start "\$@"
+}
+
+start() {
+    if [ -x "$INSTALL_TARGET/bin/start-jzlite.sh" ]; then
+        "$INSTALL_TARGET/bin/start-jzlite.sh" start &
+    elif [ -x /opt/jzlite/bin/start-jzlite.sh ]; then
+        /opt/jzlite/bin/start-jzlite.sh start &
+    elif [ -x /mnt/userdata/jzlite/bin/start-jzlite.sh ]; then
+        /mnt/userdata/jzlite/bin/start-jzlite.sh start &
+    fi
+}
+
+stop() {
+    if [ -x "$INSTALL_TARGET/bin/start-jzlite.sh" ]; then
+        "$INSTALL_TARGET/bin/start-jzlite.sh" stop
+    elif [ -x /opt/jzlite/bin/start-jzlite.sh ]; then
+        /opt/jzlite/bin/start-jzlite.sh stop
+    elif [ -x /mnt/userdata/jzlite/bin/start-jzlite.sh ]; then
+        /mnt/userdata/jzlite/bin/start-jzlite.sh stop
+    fi
+}
+
+restart() {
+    if [ -x "$INSTALL_TARGET/bin/start-jzlite.sh" ]; then
+        "$INSTALL_TARGET/bin/start-jzlite.sh" restart
+    elif [ -x /opt/jzlite/bin/start-jzlite.sh ]; then
+        /opt/jzlite/bin/start-jzlite.sh restart
+    elif [ -x /mnt/userdata/jzlite/bin/start-jzlite.sh ]; then
+        /mnt/userdata/jzlite/bin/start-jzlite.sh restart
+    fi
+}
+EOF
+            chmod +x /etc/init.d/jzlite
+            /etc/init.d/jzlite enable 2>/dev/null || true
+            echo "${GREEN}✔ Wired JZLite into OpenWrt init service (/etc/init.d/jzlite).${NC}"
+        # 3. Fallback to /etc/rc.local ONLY on generic Linux routers lacking both rc.common and XLite
+        elif [ ! -f /mnt/userdata/xlite/XLITE ] && [ -f /etc/rc.local ]; then
+            if ! grep -q "start-jzlite.sh" /etc/rc.local 2>/dev/null; then
+                sed -i '/^[[:space:]]*exit 0/d' /etc/rc.local 2>/dev/null || true
+                echo "[ -x \"$INSTALL_TARGET/bin/start-jzlite.sh\" ] && \"$INSTALL_TARGET/bin/start-jzlite.sh\" start &" >> /etc/rc.local
+                echo "exit 0" >> /etc/rc.local
+                chmod +x /etc/rc.local 2>/dev/null || true
+                echo "${GREEN}✔ Wired JZLite into /etc/rc.local.${NC}"
+            fi
         fi
     fi
 fi
