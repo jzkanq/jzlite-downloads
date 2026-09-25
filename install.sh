@@ -405,19 +405,35 @@ modprobe br_netfilter 2>/dev/null || true
 export GOMEMLIMIT=16MiB
 export GOGC=15
 
-nohup "\$DIR/bin/jzlite-probe" \\
-    -auth "\$DIR/data/auth.json" \\
-    -profiles "\$DIR/data/profiles.json" \\
-    -settings "\$DIR/data/settings.json" \\
-    -license "\$DIR/data/license.json" \\
-    -license-binding "\$DIR/data/license-binding.txt" \\
-    -license-binding-version "\$DIR/data/license-binding-version.txt" \\
-    -license-key "\$DIR/data/license-key.txt" \\
-    -xray-runtime "/tmp/jzlite-runtime" \\
-    -xray "\$DIR/bin/xray" \\
-    -hev "\$DIR/bin/hev-socks5-tunnel" \\
-    $REDIRECT_FLAG \
-    </dev/null >> "/tmp/jzlite-runtime/jzlite.log" 2>&1 &
+if command -v nohup >/dev/null 2>&1; then
+    nohup "\$DIR/bin/jzlite-probe" \\
+        -auth "\$DIR/data/auth.json" \\
+        -profiles "\$DIR/data/profiles.json" \\
+        -settings "\$DIR/data/settings.json" \\
+        -license "\$DIR/data/license.json" \\
+        -license-binding "\$DIR/data/license-binding.txt" \\
+        -license-binding-version "\$DIR/data/license-binding-version.txt" \\
+        -license-key "\$DIR/data/license-key.txt" \\
+        -xray-runtime "/tmp/jzlite-runtime" \\
+        -xray "\$DIR/bin/xray" \\
+        -hev "\$DIR/bin/hev-socks5-tunnel" \\
+        $REDIRECT_FLAG \
+        </dev/null >> "/tmp/jzlite-runtime/jzlite.log" 2>&1 &
+else
+    "\$DIR/bin/jzlite-probe" \\
+        -auth "\$DIR/data/auth.json" \\
+        -profiles "\$DIR/data/profiles.json" \\
+        -settings "\$DIR/data/settings.json" \\
+        -license "\$DIR/data/license.json" \\
+        -license-binding "\$DIR/data/license-binding.txt" \\
+        -license-binding-version "\$DIR/data/license-binding-version.txt" \\
+        -license-key "\$DIR/data/license-key.txt" \\
+        -xray-runtime "/tmp/jzlite-runtime" \\
+        -xray "\$DIR/bin/xray" \\
+        -hev "\$DIR/bin/hev-socks5-tunnel" \\
+        $REDIRECT_FLAG \
+        </dev/null >> "/tmp/jzlite-runtime/jzlite.log" 2>&1 &
+fi
 exit 0
 EOF
 chmod +x "$INSTALL_TARGET/bin/start-jzlite.sh"
@@ -456,43 +472,28 @@ XLITE_BOOT_SHIM
 
         # 2. OpenWrt / JunWRT native procd service registration
         if [ -f /etc/rc.common ]; then
-            cat <<EOF > /etc/init.d/jzlite
+            cat <<'EOF' > /etc/init.d/jzlite
 #!/bin/sh /etc/rc.common
 START=99
 STOP=10
 
 boot() {
-    start "\$@"
+    start "$@"
 }
 
 start() {
-    if [ -x "$INSTALL_TARGET/bin/start-jzlite.sh" ]; then
-        "$INSTALL_TARGET/bin/start-jzlite.sh" start &
-    elif [ -x /opt/jzlite/bin/start-jzlite.sh ]; then
-        /opt/jzlite/bin/start-jzlite.sh start &
-    elif [ -x /mnt/userdata/jzlite/bin/start-jzlite.sh ]; then
-        /mnt/userdata/jzlite/bin/start-jzlite.sh start &
-    fi
+    [ -x /opt/jzlite/bin/start-jzlite.sh ] && /opt/jzlite/bin/start-jzlite.sh start &
+    [ -x /mnt/userdata/jzlite/bin/start-jzlite.sh ] && /mnt/userdata/jzlite/bin/start-jzlite.sh start &
 }
 
 stop() {
-    if [ -x "$INSTALL_TARGET/bin/start-jzlite.sh" ]; then
-        "$INSTALL_TARGET/bin/start-jzlite.sh" stop
-    elif [ -x /opt/jzlite/bin/start-jzlite.sh ]; then
-        /opt/jzlite/bin/start-jzlite.sh stop
-    elif [ -x /mnt/userdata/jzlite/bin/start-jzlite.sh ]; then
-        /mnt/userdata/jzlite/bin/start-jzlite.sh stop
-    fi
+    [ -x /opt/jzlite/bin/start-jzlite.sh ] && /opt/jzlite/bin/start-jzlite.sh stop
+    [ -x /mnt/userdata/jzlite/bin/start-jzlite.sh ] && /mnt/userdata/jzlite/bin/start-jzlite.sh stop
 }
 
 restart() {
-    if [ -x "$INSTALL_TARGET/bin/start-jzlite.sh" ]; then
-        "$INSTALL_TARGET/bin/start-jzlite.sh" restart
-    elif [ -x /opt/jzlite/bin/start-jzlite.sh ]; then
-        /opt/jzlite/bin/start-jzlite.sh restart
-    elif [ -x /mnt/userdata/jzlite/bin/start-jzlite.sh ]; then
-        /mnt/userdata/jzlite/bin/start-jzlite.sh restart
-    fi
+    [ -x /opt/jzlite/bin/start-jzlite.sh ] && /opt/jzlite/bin/start-jzlite.sh restart
+    [ -x /mnt/userdata/jzlite/bin/start-jzlite.sh ] && /mnt/userdata/jzlite/bin/start-jzlite.sh restart
 }
 EOF
             chmod +x /etc/init.d/jzlite
