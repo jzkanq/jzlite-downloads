@@ -307,9 +307,10 @@ fi
 chmod +x "$INSTALL_TARGET/bin/jzlite-probe" 2>/dev/null || true
 [ -f "$INSTALL_TARGET/bin/xray" ] && chmod +x "$INSTALL_TARGET/bin/xray" 2>/dev/null || true
 [ -f "$INSTALL_TARGET/bin/hev-socks5-tunnel" ] && chmod +x "$INSTALL_TARGET/bin/hev-socks5-tunnel" 2>/dev/null || true
+sync
 
-if [ ! -f "$INSTALL_TARGET/bin/jzlite-probe" ]; then
-    echo "${RED}Error: JZLite probe binary not found at $INSTALL_TARGET/bin/jzlite-probe${NC}" >&2
+if [ ! -s "$INSTALL_TARGET/bin/jzlite-probe" ]; then
+    echo "${RED}Error: JZLite probe binary at $INSTALL_TARGET/bin/jzlite-probe is empty or missing.${NC}" >&2
     exit 1
 fi
 
@@ -437,6 +438,7 @@ fi
 exit 0
 EOF
 chmod +x "$INSTALL_TARGET/bin/start-jzlite.sh"
+sync
 
 # Purge any legacy or rogue init scripts on ZXIC modems that conflict with baseband or trip watchdog
 if [ ! -f /etc/rc.common ]; then
@@ -474,29 +476,50 @@ XLITE_BOOT_SHIM
         if [ -f /etc/rc.common ]; then
             cat <<'EOF' > /etc/init.d/jzlite
 #!/bin/sh /etc/rc.common
+USE_PROCD=1
 START=99
 STOP=10
 
-boot() {
-    start "$@"
+start_service() {
+    DIR="/opt/jzlite"
+    [ ! -d "$DIR" ] && [ -d "/mnt/userdata/jzlite" ] && DIR="/mnt/userdata/jzlite"
+    [ -x "$DIR/bin/jzlite-probe" ] || return 1
+
+    ip rule del priority 11000 2>/dev/null || true
+    ip route flush table 100 2>/dev/null || true
+    mkdir -p /tmp/jzlite-runtime 2>/dev/null || true
+    modprobe tun 2>/dev/null || true
+    modprobe br_netfilter 2>/dev/null || true
+
+    procd_open_instance
+    procd_set_param command "$DIR/bin/jzlite-probe" \
+        -auth "$DIR/data/auth.json" \
+        -profiles "$DIR/data/profiles.json" \
+        -settings "$DIR/data/settings.json" \
+        -license "$DIR/data/license.json" \
+        -license-binding "$DIR/data/license-binding.txt" \
+        -license-binding-version "$DIR/data/license-binding-version.txt" \
+        -license-key "$DIR/data/license-key.txt" \
+        -xray-runtime "/tmp/jzlite-runtime" \
+        -xray "$DIR/bin/xray" \
+        -hev "$DIR/bin/hev-socks5-tunnel"
+    procd_set_param respawn 3600 5 0
+    procd_set_param stdout 1
+    procd_set_param stderr 1
+    procd_set_param env GOMEMLIMIT="16MiB"
+    procd_set_param env GOGC="15"
+    procd_close_instance
 }
 
-start() {
-    [ -x /opt/jzlite/bin/start-jzlite.sh ] && /opt/jzlite/bin/start-jzlite.sh start &
-    [ -x /mnt/userdata/jzlite/bin/start-jzlite.sh ] && /mnt/userdata/jzlite/bin/start-jzlite.sh start &
-}
-
-stop() {
-    [ -x /opt/jzlite/bin/start-jzlite.sh ] && /opt/jzlite/bin/start-jzlite.sh stop
-    [ -x /mnt/userdata/jzlite/bin/start-jzlite.sh ] && /mnt/userdata/jzlite/bin/start-jzlite.sh stop
-}
-
-restart() {
-    [ -x /opt/jzlite/bin/start-jzlite.sh ] && /opt/jzlite/bin/start-jzlite.sh restart
-    [ -x /mnt/userdata/jzlite/bin/start-jzlite.sh ] && /mnt/userdata/jzlite/bin/start-jzlite.sh restart
+stop_service() {
+    killall xray 2>/dev/null || true
+    killall hev-socks5-tunnel 2>/dev/null || true
+    ip rule del priority 11000 2>/dev/null || true
+    ip route flush table 100 2>/dev/null || true
 }
 EOF
             chmod +x /etc/init.d/jzlite
+            sync
             /etc/init.d/jzlite enable 2>/dev/null || true
             echo "${GREEN}✔ Wired JZLite into OpenWrt init service (/etc/init.d/jzlite).${NC}"
         # 3. Fallback to /etc/rc.local ONLY on generic Linux routers lacking both rc.common and XLite
